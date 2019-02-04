@@ -176,6 +176,11 @@ class VisualGraph(object):
         for node in visited_nodes:
             logger.info('Looking at %s' % node.name)
 
+            # Skip module nodes, since they're plotted as 'namespaces' anyways
+            if repr(node.flavor) == 'module':
+                logger.debug('Skipping %s', node.name)
+                continue
+
             # Create the node itself and add it to nodes_dict
             idx, fill_RGBA, text_RGB = colorizer.make_colors(node)
             visual_node = VisualNode(
@@ -246,9 +251,11 @@ class VisualGraph(object):
         if draw_uses:
             color = "#000000"
             for n in visitor.uses_edges:
-                if n.defined:
+                # HACK: We removed module nodes above, so we'll skip those now
+                #       Should be removed from visitor.uses_edges earlier.
+                if n in nodes_dict and n.defined:
                     for n2 in visitor.uses_edges[n]:
-                        if n2.defined:
+                        if n2 in nodes_dict and n2.defined:
                             root_graph.edges.append(
                                     VisualEdge(
                                         nodes_dict[n],
